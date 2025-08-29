@@ -29,6 +29,13 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
+scripts/*.exe
+scripts/num*
+scripts/*.bat
+scripts/*.ps1
+scripts/activate
+pyvenv.cfg
+
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
