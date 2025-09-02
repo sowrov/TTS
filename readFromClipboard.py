@@ -4,7 +4,6 @@ import pyperclip
 import time
 import wave
 import pyaudio
-import torchaudio
 import re
 from TTS.api import TTS
 import threading
@@ -14,7 +13,6 @@ from queue import Queue
 from io import BytesIO
 import numpy as np
 import scipy.io.wavfile
-import json
 
 
 logging.basicConfig(level=logging.DEBUG)
