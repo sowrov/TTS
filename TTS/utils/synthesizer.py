@@ -502,4 +502,4 @@ class Synthesizer(nn.Module):
         audio_time = len(wavs) / self.tts_config.audio["sample_rate"]
         print(f" > Processing time: {process_time}")
         print(f" > Real-time factor: {process_time / audio_time}")
-        return wavs
+        return wavs, self.tts_config.audio['sample_rate']

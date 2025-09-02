@@ -273,7 +273,7 @@ class TTS(nn.Module):
         self._check_arguments(
             speaker=speaker, language=language, speaker_wav=speaker_wav, emotion=emotion, speed=speed, **kwargs
         )
-        wav = self.synthesizer.tts(
+        wav, sample_rate = self.synthesizer.tts(
             text=text,
             speaker_name=speaker,
             language_name=language,
@@ -285,7 +285,7 @@ class TTS(nn.Module):
             split_sentences=split_sentences,
             **kwargs,
         )
-        return wav
+        return wav, sample_rate
 
     def tts_to_file(
         self,
