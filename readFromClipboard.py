@@ -47,7 +47,7 @@ class TaskManager:
 
 AUDIO_DIR = "audio_files"
 os.makedirs(AUDIO_DIR, exist_ok=True)
-TEN_MS = 10/1000.0
+SLEEP_TIME_MS = 100/1000.0 
 
 def extract_field_names(obj):
     if hasattr(obj, '__dict__'):
@@ -87,7 +87,7 @@ def audio_generator(tts, text, stop_event):
         else:
             wav, SAMPLE_RATE = tts.tts(text=line, split_sentences=False)
             audioQueue.put(wav) #speaker_wav="male.wav", language="en", 
-        time.sleep(TEN_MS)
+        time.sleep(SLEEP_TIME_MS)
 
 def split_text_into_lines(text):
     # Replace newlines with spaces
@@ -157,9 +157,9 @@ def audio_player(stop_event):
             if isinstance(wav_bytes, list):
                 wav_bytes = np.array(wav_bytes)
             play_output_audio(wav_bytes)
-            time.sleep(TEN_MS)
+            time.sleep(SLEEP_TIME_MS)
         else:
-            time.sleep(2)
+            time.sleep(SLEEP_TIME_MS)
 
 def clipboard_listener(manager):
     recent_text = ""
