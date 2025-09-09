@@ -10,12 +10,15 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 import logging
 from queue import Queue
+from queue import Empty
 from io import BytesIO
 import numpy as np
 import scipy.io.wavfile
+import keyboard #pip install keyboard
+from functools import partial
 
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 audioQueue = Queue()
 SAMPLE_RATE = 20000
@@ -32,6 +35,7 @@ class TaskManager:
         self.executor = ThreadPoolExecutor(max_workers=2)
         self.executor.submit(audio_generator, self.tts, self.current_text, self.stop_event)
         self.executor.submit(audio_player, self.stop_event)
+        self.executor.submit(listen_for_ctrl_x, self)
         logging.debug("Started new tasks")
 
     def stop_tasks(self):
@@ -103,7 +107,7 @@ def split_text_into_lines(text):
 
     return parts
 
-def play_output_audio(wav_data):
+def play_output_audio(wav_data, stop_event):
     global SAMPLE_RATE
     # Open the WAV file
     try:
@@ -132,7 +136,7 @@ def play_output_audio(wav_data):
         # Step 4: Stream the audio
         chunk = 1024
         data = wf.readframes(chunk)
-        while data:
+        while data and not stop_event.is_set():
             stream.write(data)
             data = wf.readframes(chunk)
 
@@ -156,7 +160,7 @@ def audio_player(stop_event):
                 wav_bytes = wav_bytes.cpu().numpy()
             if isinstance(wav_bytes, list):
                 wav_bytes = np.array(wav_bytes)
-            play_output_audio(wav_bytes)
+            play_output_audio(wav_bytes, stop_event)
             time.sleep(SLEEP_TIME_MS)
         else:
             time.sleep(SLEEP_TIME_MS)
@@ -173,14 +177,32 @@ def clipboard_listener(manager):
                 manager.stop_tasks()
                 manager.setText(current_text)
                 manager.start_tasks()
-                # synthesize_speech(tts, current_text)
-                # play_output_audio()
                 logging.debug(current_text)
                 recent_text = current_text
             time.sleep(1)  # Check every second
     except KeyboardInterrupt:
         manager.stop_tasks()
         logging.info("\n👋 Listener stopped by user.")
+
+def end_current_play(manager):
+    print("Ctrl+X detected! Performing action...")
+    if (not manager.stop_event.is_set()):
+        print("Stopping..")
+        manager.stop_tasks()
+        while not audioQueue.empty():
+            try:
+                audioQueue.get_nowait()
+            except Empty:
+                pass
+            audioQueue.task_done()
+
+# Keyboard listener function
+def listen_for_ctrl_x(manager):
+    print("Listening for Ctrl+X...")
+    keyboard.add_hotkey('ctrl+x', partial(end_current_play, manager))
+    while not manager.stop_event.is_set():
+        time.sleep(1)
+    
 
 def main():
     manager = TaskManager()
