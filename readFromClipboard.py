@@ -1,6 +1,7 @@
 import os
 import torch
 import pyperclip
+from pyperclip import PyperclipWindowsException
 import time
 import wave
 import pyaudio
@@ -61,13 +62,15 @@ def extract_field_names(obj):
 
 def initialize_tts():
     """Initialize CUDA device and TTS model."""
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    if torch.cuda.is_available():
-        logging.debug("CUDA installed successfully\n")
-    else:
-        logging.debug("CUDA not properly installed. Stopping process...")
-        quit()
+    # if torch.cuda.is_available():
+    #     logging.debug("CUDA installed successfully\n")
+    # else:
+    #     logging.debug("CUDA not properly installed. Stopping process...")
+    #     quit()
+
+    device = torch.device("cpu")
 
     # view_models = input("View models? [y/n]\n")
     # if view_models.lower() == "y":
@@ -171,14 +174,18 @@ def clipboard_listener(manager):
     
     try:
         while True:
-            current_text = pyperclip.paste()
-            if current_text != recent_text and isinstance(current_text, str) and current_text.strip():
-                logging.info("New clipboard text detected")
-                manager.stop_tasks()
-                manager.setText(current_text)
-                manager.start_tasks()
-                logging.debug(current_text)
-                recent_text = current_text
+            try:
+                current_text = pyperclip.paste()
+                if current_text != recent_text and isinstance(current_text, str) and current_text.strip():
+                    logging.info("New clipboard text detected")
+                    manager.stop_tasks()
+                    manager.setText(current_text)
+                    manager.start_tasks()
+                    logging.debug(current_text)
+                    recent_text = current_text
+            except PyperclipWindowsException as e:
+                print("Clipboard access failed:", e)
+
             time.sleep(1)  # Check every second
     except KeyboardInterrupt:
         manager.stop_tasks()
